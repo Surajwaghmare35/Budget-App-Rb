@@ -1,0 +1,31 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: clone-build-push-run-
+spec:
+  pipelineRef:
+    name: clone-build-push
+  podTemplate:
+    securityContext:
+      fsGroup: 65532
+  workspaces:
+    - name: shared-data
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: docker-credentials
+      secret:
+        secretName: docker-credentials
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+  params:
+    - name: repo-url
+      value: https://github.com/Surajwaghmare35/Budget-App-Rb.git
+    - name: image-reference
+      # value: container.registry.com/sublocation/my_app:version
+      value: docker.io/surajwaghmare35/budget-app-web:latest

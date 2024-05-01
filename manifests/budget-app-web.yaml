@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: budget-app-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: budget-app-web
+  template:
+    metadata:
+      labels:
+        app: budget-app-web
+    spec:
+      containers:
+        - name: budget-app-web
+          image: surajwaghmare35/budget-app-web
+          command: ["/bin/sh"]
+          args:
+            [
+              "-c",
+              "rm -f tmp/pids/server.pid && rails db:create db:migrate && bundle exec rails s -p 3000 -b '0.0.0.0'",
+            ]
+          resources:
+            # limits:
+            # memory: "128Mi"
+            # cpu: "500m"
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: DB_USER
+              value: "Budgy"
+            - name: DB_PASSWORD
+              value: "Budgy"
+            - name: DB_NAME
+              value: "budgy_development"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: budget-app-web-service
+spec:
+  selector:
+    app: budget-app-web
+  ports:
+    - port: 3000 # Use a specific port for NodePort
+      targetPort: 3000
+      protocol: TCP
+      # nodePort: 30000
+  type: NodePort

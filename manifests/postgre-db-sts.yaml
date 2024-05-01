@@ -1,0 +1,59 @@
+# headless-pg-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  labels:
+    app: postgres-a
+spec:
+  selector:
+    app: postgres-a
+  ports:
+    - port: 5432
+      # targetPort: 5432
+      # protocol: TCP
+  clusterIP: None
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-sts
+spec:
+  selector:
+    matchLabels:
+      app: postgres-a # has to match .spec.template.metadata.labels
+  serviceName: "postgres-service"
+  replicas: 1 # by default is 1
+  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:
+        app: postgres-a # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: postgres
+          image: postgres:14.1
+          env:
+            - name: POSTGRES_DB
+              value: budgy_development
+            - name: POSTGRES_USER
+              value: Budgy
+            - name: POSTGRES_PASSWORD
+              value: Budgy
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: pgdata
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        # storageClassName: "my-storage-class" //standard
+        # storageClassName: "standard"
+        resources:
+          requests:
+            storage: 1Gi
